@@ -8,8 +8,9 @@ import time
 from celery import shared_task
 from pics.models import Photo
 from pics.settings import (VIEW_THRESHOLD, DOWNLOAD_PATH, FONT_PATH,
-                           TEST_LIMIT)
-from pics.flickr_utils import connect, disconnect, flickr_keys
+                           TEST_LIMIT, FLICKR_USER_ID)
+from pics.flickr_utils import (flickr_connect, get_flickr_photo, 
+                               get_public_count)
 from celery import Celery
 from celery_progress.backend import ProgressRecorder
 from PIL import Image, ImageFont, ImageDraw, ExifTags, ImageFile
@@ -80,10 +81,8 @@ def final_processing(img_path, title, date):
         return False
 
 def update_one_record(photo):
-    keys = flickr_keys()
-    flickr = flickrapi.FlickrAPI(keys['api_key'], keys['api_secret'])
-    info = flickr.photos.getInfo(photo_id=photo.pic_id, format='json')
-    info_dict = json.loads(info.decode("utf-8"))
+    flickr = flickr_connect()
+    info_dict = get_flickr_photo(flickr, photo.pic_id)
 
     title = info_dict['photo']['title']['_content']
     # quotes in the title confuse things
@@ -92,6 +91,7 @@ def update_one_record(photo):
     photo.title = title
 
     photo.date_taken = '%s+00' % info_dict['photo']['dates']['taken']
+    photo.view_count = int(info_dict['photo']['views'])
 
     photo.save()
 
@@ -143,23 +143,25 @@ def update_pics_db(self):
     """Load the database with information on all of the pictures
     in flickr.
     """
-    keys = flickr_keys()
-    flickr = flickrapi.FlickrAPI(keys['api_key'], keys['api_secret'])
+    flickr = flickr_connect()
 
     progress_recorder = ProgressRecorder(self)
-    total = Photo.objects.count()
+
+    if TEST_LIMIT > 0:
+        total = TEST_LIMIT
+    else:
+        total = get_public_count(flickr)
     progress = 0
 
     # delete the info currently in the table
     Photo.objects.all().delete()
 
-    for photo in flickr.walk(user_id='mickmcd'):
+    for photo in flickr.walk(user_id=FLICKR_USER_ID):
         photo_id = photo.get('id')
         retries = 5
         while retries > 0:
             try:
-                info = flickr.photos.getInfo(photo_id=photo_id, format='json')
-                info_dict = json.loads(info.decode("utf-8"))
+                info_dict = get_flickr_photo(flickr, photo_id)
                 if info_dict['photo']['visibility']['ispublic'] == 1:
                     create_photo_object(flickr, photo_id, info_dict)
                 retries = 0

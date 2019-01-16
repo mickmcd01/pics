@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 from .models import Photo
-from .flickr_utils import connect, disconnect, flickr_keys
+from .flickr_utils import flickr_keys
 import flickrapi
 import flickrapi.shorturl
 import flickrapi.exceptions

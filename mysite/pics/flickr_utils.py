@@ -1,29 +1,10 @@
 import os
-import psycopg2
 import configparser
+import json
+import flickrapi
+from pics.settings import CONFIG_PATH
 
-
-def db_config(filename='/home/mick/flickr.ini'):
-    """Read the database configuration info."""
-    # create a parser
-    config = configparser.ConfigParser()
-    # read config file
-    config.read(filename)
-
-    # get postgres database settings
-    db = {}
-    if config.has_section('postgresql'):
-        params = config.items('postgresql')
-        for param in params:
-            db[param[0]] = param[1]
-    else:
-        raise Exception(
-            'Section postgresql not found in the {0} file'.format(filename))
-
-    return db
-
-
-def flickr_keys(filename='/home/mick/flickr.ini'):
+def flickr_keys(filename=CONFIG_PATH):
     """Read the flickr key information."""
     # create a parser
     config = configparser.ConfigParser()
@@ -43,37 +24,21 @@ def flickr_keys(filename='/home/mick/flickr.ini'):
     return flickr_keys
 
 
-def connect():
-    """Connect to the PostgreSQL database server."""
-    conn = None
-    try:
-        # read connection parameters
-        params = db_config()
-
-        # connect to the PostgreSQL server
-        print('Connecting to the PostgreSQL database...')
-        conn = psycopg2.connect(**params)
-        conn.set_session(autocommit=True)
-
-        # create a cursor
-        cur = conn.cursor()
-        print('PostgreSQL database version:')
-        cur.execute('SELECT version()')
-
-        # display the PostgreSQL database server version
-        db_version = cur.fetchone()
-        print(db_version)
-
-        return conn, cur
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-        return None, None
-    finally:
-        if conn is None:
-            print('Database connection closed.')
+def flickr_connect():
+    keys = flickr_keys()
+    flickr = flickrapi.FlickrAPI(keys['api_key'], keys['api_secret'])
+    return flickr
 
 
-def disconnect(conn, cur):
-    """Disconnect from PostgreSQL database."""
-    cur.close()
-    conn.close()
+def get_flickr_photo(flickr, photo_id):
+    info = flickr.photos.getInfo(photo_id=photo_id, format='json')
+    info_dict = json.loads(info.decode("utf-8"))
+    return info_dict
+
+def get_public_count(flickr):
+    info = flickr.people.findByUsername(username='mick mcd', format='json')
+    info = json.loads(info.decode('utf-8'))
+    user_id = info['user']['nsid']
+    info = flickr.people.getInfo(user_id=user_id, format='json')
+    info = json.loads(info.decode('utf-8'))
+    return info['person']['photos']['count']['_content']

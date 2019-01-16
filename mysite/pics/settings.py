@@ -137,3 +137,5 @@ VIEW_THRESHOLD = 100
 DOWNLOAD_PATH = '/home/mick/Slideshow'
 FONT_PATH = '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'
 TEST_LIMIT = -1
+CONFIG_PATH = '/home/mick/flickr.ini'
+FLICKR_USER_ID='mickmcd'
