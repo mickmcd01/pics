@@ -17,9 +17,87 @@ from PIL import Image, ImageFont, ImageDraw, ExifTags, ImageFile
 app = Celery('tasks', broker='redis://localhost')
 app.conf.broker_url = 'redis://localhost:6379/0'
 
-def process_one_photo(flickr, photo_id, info_dict):
-    """Process one photo: using the metadata for the photo,
-    put the relevant information into the database.
+def final_processing(img_path, title, date):
+    """Add title and date to a photo. If necessary,
+    rotate the photo as well.
+    """
+    img_fraction = 0.02
+    img = Image.open(img_path)
+
+    # rotate the picture if needed
+    for orientation in ExifTags.TAGS.keys(): 
+        if ExifTags.TAGS[orientation]=='Orientation':
+            break 
+
+    e = img._getexif()
+    if e:
+        exif = dict(e.items())
+        if exif:
+            try:
+                orient = exif[orientation]
+                if orient == 3:  
+                    img = img.transpose(Image.ROTATE_180)
+                elif orient == 6: 
+                    img = img.transpose(Image.ROTATE_270)
+                elif orient == 8: 
+                    img = img.transpose(Image.ROTATE_90)
+            except:
+                pass
+
+    # add the title and the date and save. put it in a try/except
+    # deal with "image truncated" errors from PIL
+    try:
+        draw = ImageDraw.Draw(img)
+        font_size = 32
+        font = ImageFont.truetype(FONT_PATH, font_size)
+
+        while font.getsize(title)[1] < img_fraction * img.size[1]:
+            font_size += 2
+            font = ImageFont.truetype(FONT_PATH, font_size)
+
+        margin = font.getsize(title)[1]
+        line_2 = (margin * 1.5) + font.getsize(title)[1]
+
+        # border
+        draw.text((margin-2, margin-2), title, font=font, fill='black')
+        draw.text((margin+2, margin-2), title, font=font, fill='black')
+        draw.text((margin-2, margin+2), title, font=font, fill='black')
+        draw.text((margin+2, margin+2), title, font=font, fill='black')
+
+        draw.text((margin-2, line_2-2), date, font=font, fill='black')
+        draw.text((margin+2, line_2-2), date, font=font, fill='black')
+        draw.text((margin-2, line_2+2), date, font=font, fill='black')
+        draw.text((margin+2, line_2+2), date, font=font, fill='black')
+
+        # fill
+        draw.text((margin, margin), title, font=font, fill='white')
+        draw.text((margin, line_2), date, font=font, fill='white')
+
+        # save
+        img.save(img_path, quality=95)
+        return True
+    except:
+        return False
+
+def update_one_record(photo):
+    keys = flickr_keys()
+    flickr = flickrapi.FlickrAPI(keys['api_key'], keys['api_secret'])
+    info = flickr.photos.getInfo(photo_id=photo.pic_id, format='json')
+    info_dict = json.loads(info.decode("utf-8"))
+
+    title = info_dict['photo']['title']['_content']
+    # quotes in the title confuse things
+    title = title.replace("'", '')
+    title = title.replace('"', '')
+    photo.title = title
+
+    photo.date_taken = '%s+00' % info_dict['photo']['dates']['taken']
+
+    photo.save()
+
+def create_photo_object(flickr, photo_id, info_dict):
+    """Create a Photo object and save it using the relevent
+    metadata for the photo from flickr.
     """
     photo = Photo()
     photo.pic_id = photo_id
@@ -83,7 +161,7 @@ def update_pics_db(self):
                 info = flickr.photos.getInfo(photo_id=photo_id, format='json')
                 info_dict = json.loads(info.decode("utf-8"))
                 if info_dict['photo']['visibility']['ispublic'] == 1:
-                    process_one_photo(flickr, photo_id, info_dict)
+                    create_photo_object(flickr, photo_id, info_dict)
                 retries = 0
             except flickrapi.exceptions.FlickrError:
                 retries -= 1
@@ -112,12 +190,7 @@ def download_pics_task(self):
 
     for photo in photos:
         if photo.view_count > VIEW_THRESHOLD or photo.wallpaper is True:
-            _, tail = os.path.split(photo.source_url)
-            dest_file = os.path.join(DOWNLOAD_PATH, tail)
-            if not os.path.isfile(dest_file):
-                r = requests.get(photo.source_url)
-                with open(dest_file, "wb") as pic_file:
-                    pic_file.write(r.content)
+            photo.download_from_flickr()
             progress += 1
             progress_recorder.set_progress(progress, total)
     progress_recorder.set_progress(total, total)
@@ -136,73 +209,14 @@ def process_slides_task(self):
     photos = Photo.objects.all()
     for photo in photos:
         _, tail = os.path.split(photo.source_url)
-        photo_info[tail] = (photo.title, photo.date_taken.strftime('%B %d, %Y'))
+        photo_info[tail] = (photo.title, photo.display_date())
 
     filelist = os.listdir(DOWNLOAD_PATH)
     total = len(filelist)
-    img_fraction = 0.02
 
     for filename in os.listdir(DOWNLOAD_PATH):
         img_path = os.path.join(DOWNLOAD_PATH, filename)
-        img = Image.open(img_path)
-
-        # rotate the picture if needed
-        for orientation in ExifTags.TAGS.keys(): 
-            if ExifTags.TAGS[orientation]=='Orientation':
-                break 
-
-        e = img._getexif()
-        if e:
-            exif = dict(e.items())
-            if exif:
-                try:
-                    orient = exif[orientation]
-                    if orient == 3:  
-                        img = img.transpose(Image.ROTATE_180)
-                    elif orient == 6: 
-                        img = img.transpose(Image.ROTATE_270)
-                    elif orient == 8: 
-                        img = img.transpose(Image.ROTATE_90)
-                except:
-                    pass
-
-        # add the title and the date and save. put it in a try/except
-        # deal with "image truncated" errors from PIL
-        try:
-            draw = ImageDraw.Draw(img)
-            font_size = 32
-            font = ImageFont.truetype(FONT_PATH, font_size)
-
-            title = photo_info[filename][0]
-            date = photo_info[filename][1]
-
-            while font.getsize(title)[1] < img_fraction * img.size[1]:
-                font_size += 2
-                font = ImageFont.truetype(FONT_PATH, font_size)
-
-            margin = font.getsize(title)[1]
-            line_2 = (margin * 1.5) + font.getsize(title)[1]
-
-            # border
-            draw.text((margin-2, margin-2), title, font=font, fill='black')
-            draw.text((margin+2, margin-2), title, font=font, fill='black')
-            draw.text((margin-2, margin+2), title, font=font, fill='black')
-            draw.text((margin+2, margin+2), title, font=font, fill='black')
-
-            draw.text((margin-2, line_2-2), date, font=font, fill='black')
-            draw.text((margin+2, line_2-2), date, font=font, fill='black')
-            draw.text((margin-2, line_2+2), date, font=font, fill='black')
-            draw.text((margin+2, line_2+2), date, font=font, fill='black')
-
-            # fill
-            draw.text((margin, margin), title, font=font, fill='white')
-            draw.text((margin, line_2), date, font=font, fill='white')
-
-            # save
-            img.save(img_path, quality=95)
-        except:
-            pass
-
+        final_processing(img_path, photo_info[filename][0], photo_info[filename][1])
         progress += 1
         progress_recorder.set_progress(progress, total)
 
