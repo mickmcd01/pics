@@ -6,12 +6,17 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from pics.models import Photo, Statistics
 from pics.tasks import final_processing, update_one_record
+from pics.flickr_utils import flickr_update_photo
 
 class PhotoAdmin(admin.ModelAdmin):
     list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_photo_url')
     search_fields = ('title',)
     actions = ['update_photos', 'view_local_photo']
 
+    def save_model(self, request, obj, form, change):
+        flickr_update_photo(obj)
+        super().save_model(request, obj, form, change)
+    
     def update_photos(self, request, queryset):
         for obj in queryset:
             update_one_record(obj)

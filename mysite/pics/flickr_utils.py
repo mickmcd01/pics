@@ -2,6 +2,7 @@ import os
 import configparser
 import json
 import flickrapi
+import time
 from pics.settings import CONFIG_PATH, FLICKR_USER_NAME
 
 def flickr_keys(filename=CONFIG_PATH):
@@ -42,3 +43,9 @@ def get_public_count(flickr):
     info = flickr.people.getInfo(user_id=user_id, format='json')
     info = json.loads(info.decode('utf-8'))
     return info['person']['photos']['count']['_content']
+
+def flickr_update_photo(obj):
+    flickr = flickr_connect()
+    flickr.authenticate_via_browser(perms='write')
+    flickr.photos.setMeta(photo_id=obj.pic_id, title=obj.title)
+    flickr.photos.setDates(photo_id=obj.pic_id, date_taken=obj.date_taken.strftime('%Y-%m-%d %H:%M:%S'))
