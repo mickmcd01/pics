@@ -2,7 +2,7 @@ import os
 import configparser
 import json
 import flickrapi
-from pics.settings import CONFIG_PATH
+from pics.settings import CONFIG_PATH, FLICKR_USER_NAME
 
 def flickr_keys(filename=CONFIG_PATH):
     """Read the flickr key information."""
@@ -36,7 +36,7 @@ def get_flickr_photo(flickr, photo_id):
     return info_dict
 
 def get_public_count(flickr):
-    info = flickr.people.findByUsername(username='mick mcd', format='json')
+    info = flickr.people.findByUsername(username=FLICKR_USER_NAME, format='json')
     info = json.loads(info.decode('utf-8'))
     user_id = info['user']['nsid']
     info = flickr.people.getInfo(user_id=user_id, format='json')

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path, reverse
 from django.utils.html import format_html
-from pics.models import Photo
+from pics.models import Photo, Statistics
 from pics.tasks import final_processing, update_one_record
 
 class PhotoAdmin(admin.ModelAdmin):
@@ -36,3 +36,8 @@ class PhotoAdmin(admin.ModelAdmin):
     view_local_photo.short_description = "View local photo"
 
 admin.site.register(Photo, PhotoAdmin)
+
+class StatisticsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'public_pics', 'view_count', 'edits')
+
+admin.site.register(Statistics, StatisticsAdmin)    
