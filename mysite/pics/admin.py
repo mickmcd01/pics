@@ -1,5 +1,8 @@
 import os
+from subprocess import Popen
 from django.contrib import admin
+from django.shortcuts import render
+from django.urls import path, reverse
 from django.utils.html import format_html
 from pics.models import Photo
 from pics.tasks import final_processing, update_one_record
@@ -7,7 +10,7 @@ from pics.tasks import final_processing, update_one_record
 class PhotoAdmin(admin.ModelAdmin):
     list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_photo_url')
     search_fields = ('title',)
-    actions = ['update_photos']
+    actions = ['update_photos', 'view_local_photo']
 
     def update_photos(self, request, queryset):
         for obj in queryset:
@@ -24,5 +27,11 @@ class PhotoAdmin(admin.ModelAdmin):
         return format_html("<a href='{url}' target='_blank'>{url}</a>", url=obj.source_url)
 
     show_photo_url.short_description = "Photo on Flickr"
+
+    def view_local_photo(self, request, queryset):
+        for obj in queryset:
+            Popen(['xviewer', obj.image_path()]) 
+
+    view_local_photo.short_description = "View local photo"
 
 admin.site.register(Photo, PhotoAdmin)
