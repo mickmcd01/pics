@@ -30,7 +30,8 @@ class PhotoAdmin(admin.ModelAdmin):
 
     def view_local_photo(self, request, queryset):
         for obj in queryset:
-            Popen(['xviewer', obj.image_path()]) 
+            if os.path.isfile(obj.image_path()): 
+                Popen(['xviewer', obj.image_path()]) 
 
     view_local_photo.short_description = "View local photo"
 
