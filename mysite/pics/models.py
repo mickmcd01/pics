@@ -8,7 +8,7 @@ import requests
 import datetime
 from django.db import models
 from django.db.models import Sum
-from pics.settings import DOWNLOAD_PATH
+from pics.settings import DOWNLOAD_PATH, VIEW_THRESHOLD
 
 class Statistics(models.Model):
     date = models.DateTimeField(auto_now_add=True)
@@ -112,4 +112,19 @@ class Photo(models.Model):
                     break
             photo.source_url = flickr_info['url_o']
             photo.save()
-        return return_value    
+        return return_value
+
+    def in_slideshow(self):
+        if self.view_count >= VIEW_THRESHOLD or self.wallpaper:
+            return True
+        else:
+            return False
+    
+    @staticmethod
+    def slideshow_count():
+        count = 0
+        photos = Photo.objects.all()
+        for photo in photos:
+            if photo.in_slideshow() is True:
+                count += 1
+        return count

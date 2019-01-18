@@ -22,32 +22,32 @@ def final_processing(img_path, title, date):
     """Add title and date to a photo. If necessary,
     rotate the photo as well.
     """
-    img_fraction = 0.02
-    img = Image.open(img_path)
-
-    # rotate the picture if needed
-    for orientation in ExifTags.TAGS.keys(): 
-        if ExifTags.TAGS[orientation]=='Orientation':
-            break 
-
-    e = img._getexif()
-    if e:
-        exif = dict(e.items())
-        if exif:
-            try:
-                orient = exif[orientation]
-                if orient == 3:  
-                    img = img.transpose(Image.ROTATE_180)
-                elif orient == 6: 
-                    img = img.transpose(Image.ROTATE_270)
-                elif orient == 8: 
-                    img = img.transpose(Image.ROTATE_90)
-            except:
-                pass
-
-    # add the title and the date and save. put it in a try/except
-    # deal with "image truncated" errors from PIL
     try:
+        img_fraction = 0.02
+        img = Image.open(img_path)
+
+        # rotate the picture if needed
+        for orientation in ExifTags.TAGS.keys(): 
+            if ExifTags.TAGS[orientation]=='Orientation':
+                break 
+
+        e = img._getexif()
+        if e:
+            exif = dict(e.items())
+            if exif:
+                try:
+                    orient = exif[orientation]
+                    if orient == 3:  
+                        img = img.transpose(Image.ROTATE_180)
+                    elif orient == 6: 
+                        img = img.transpose(Image.ROTATE_270)
+                    elif orient == 8: 
+                        img = img.transpose(Image.ROTATE_90)
+                except:
+                    pass
+
+        # add the title and the date and save. put it in a try/except
+        # deal with "image truncated" errors from PIL
         draw = ImageDraw.Draw(img)
         font_size = 32
         font = ImageFont.truetype(FONT_PATH, font_size)
@@ -176,13 +176,11 @@ def download_pics_task(self):
     total = 0
     progress = 0
 
+    total = Photo.slideshow_count()
+
     photos = Photo.objects.all()
     for photo in photos:
-        if photo.view_count > VIEW_THRESHOLD or photo.wallpaper is True:
-            total += 1
-
-    for photo in photos:
-        if photo.view_count > VIEW_THRESHOLD or photo.wallpaper is True:
+        if photo.in_slideshow() is True:
             photo.download_from_flickr()
             progress += 1
             progress_recorder.set_progress(progress, total)

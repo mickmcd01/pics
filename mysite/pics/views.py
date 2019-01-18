@@ -15,7 +15,8 @@ from .tasks import update_pics_db, rebuild_pics_db, download_pics_task, process_
 def index(request):
     total_views = Photo.total_views()
     public_pictures = Photo.objects.count()
-    context = {'total_views': total_views, 'public_pictures': public_pictures}
+    slideshow = Photo.slideshow_count()
+    context = {'total_views': total_views, 'public_pictures': public_pictures, 'slideshow': slideshow}
     return render(request, 'pics/index.html', context=context)
 
 def update_db(request):
