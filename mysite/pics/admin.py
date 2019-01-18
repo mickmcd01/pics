@@ -12,7 +12,11 @@ class PhotoAdmin(admin.ModelAdmin):
     list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_photo_url')
     search_fields = ('title',)
     actions = ['update_photos', 'view_local_photo']
+    readonly_fields = ['pic_id', 'date_posted', 'date_updated', 'view_count', 'source_url', 'wallpaper']
 
+    def has_add_permission(self, request, obj=None):
+        return False
+        
     def save_model(self, request, obj, form, change):
         flickr_update_photo(obj)
         super().save_model(request, obj, form, change)
