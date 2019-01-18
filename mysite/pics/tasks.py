@@ -114,26 +114,37 @@ def update_db_from_flickr(self, rebuild):
         Photo.objects.all().delete()
 
     edit_count = 0
+    page_number = 1
+    info = flickr.photos.search(user_id=FLICKR_USER_ID,
+                             privacy_filter=1,
+                             format='json',
+                             per_page=100,
+                             page=1)
+    info = json.loads(info.decode('utf-8'))
+    total = int(info['photos']['total'])
+    loop_count = info['photos']['pages']
 
-    for photo in flickr.walk(user_id=FLICKR_USER_ID):
-        photo_id = photo.get('id')
-        retries = 5
-        while retries > 0:
-            try:
-                info_dict = get_flickr_photo(flickr, photo_id)
-                if info_dict['photo']['visibility']['ispublic'] == 1:
-                    status = Photo.create_or_update(flickr, photo_id, info_dict)
-                    if status == 'edit':
-                        edit_count += 1
-                retries = 0
-            except flickrapi.exceptions.FlickrError:
-                retries -= 1
-                time.sleep(0.1)
-        progress_recorder.set_progress(progress, total)
-        if progress < total:
-            progress += 1
-        if TEST_LIMIT > 0 and progress >= TEST_LIMIT:
-            break
+    page_number = 1
+    while page_number <= loop_count:
+        info = flickr.photos.search(user_id=FLICKR_USER_ID,
+                                privacy_filter=1,
+                                format='json',
+                                extras='views,date_taken,url_o,date_upload,last_update,tags',
+                                per_page=100,
+                                page=page_number)
+        info = json.loads(info.decode('utf-8'))
+        page_number += 1
+        for entry in info['photos']['photo']:
+            photo_id = entry['id']
+            status = Photo.create_or_update(flickr, photo_id, entry)
+            if status == 'edit':
+                edit_count += 1
+            progress_recorder.set_progress(progress, total)
+            if progress < total:
+                progress += 1
+            if TEST_LIMIT > 0 and progress >= TEST_LIMIT:
+                break
+
     progress_recorder.set_progress(total, total)
     Statistics.create(edit_count)
     return

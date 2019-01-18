@@ -61,32 +61,30 @@ class Photo(models.Model):
         return total_views['view_count__sum']
 
     @staticmethod
-    def create_or_update(flickr, photo_id, info_dict):
+    def create_or_update(flickr, photo_id, flickr_info):
         photo = None
         return_value = ''
         views_changed = False
         try:
             photo = Photo.objects.get(pic_id=photo_id)
-            if photo.view_count != int(info_dict['photo']['views']):
-                photo.view_count = int(info_dict['photo']['views'])
+            if photo.view_count != int(flickr_info['views']):
+                photo.view_count = int(flickr_info['views'])
                 views_changed = True
-            title = info_dict['photo']['title']['_content']
+            title = flickr_info['title']
             # quotes in the title confuse things
             title = title.replace("'", '')
             title = title.replace('"', '')
             if title != photo.title:
                 photo.title = title
                 return_value = 'edit'
-                print('Titles: %s, %s' % (title, photo.title))
             old_date = time.strftime('%Y-%m-%d %H:%M:%S', photo.date_taken)
-            if old_date != info_dict['photo']['dates']['taken']:
-                print('Dates: %s, %s' % (old_date, info_dict['photo']['dates']['taken']))
-                photo.date_taken = '%s+00' % info_dict['photo']['dates']['taken']
+            if old_date != flickr_info['datetaken']:
+                photo.date_taken = '%s+00' % flickr_info['datetaken']
                 return_value = 'edit'
             if photo.wallpaper is False:
-                tags = info_dict['photo']['tags']
-                for tag in tags['tag']:
-                    if tag['raw'] == 'wallpaper':
+                tags = flickr_info['tags'].split()
+                for tag in tags:
+                    if tag == 'wallpaper':
                         photo.wallpaper = True
                         return_value = 'edit'
                         break
@@ -96,39 +94,22 @@ class Photo(models.Model):
             return_value = 'create'
             photo = Photo()
             photo.pic_id = photo_id
-            title = info_dict['photo']['title']['_content']
+            title = flickr_info['title']
             # quotes in the title confuse things
             title = title.replace("'", '')
             title = title.replace('"', '')
-            photo.title = title
-            photo.date_taken = '%s+00' % info_dict['photo']['dates']['taken']
+            photo.title = flickr_info['title']
+            photo.date_taken = '%s+00' % flickr_info['datetaken']
             photo.date_posted = time.strftime('%Y-%m-%d %H:%M:%S+00', time.localtime(
-                                    int(info_dict['photo']['dates']['posted'])))
+                                    int(flickr_info['dateupload'])))
             photo.date_updated = time.strftime('%Y-%m-%d %H:%M:%S+00', time.localtime(
-                                    int(info_dict['photo']['dates']['lastupdate'])))
-            photo.view_count = int(info_dict['photo']['views'])
-            tags = info_dict['photo']['tags']
-            for tag in tags['tag']:
-                if tag['raw'] == 'wallpaper':
+                                    int(flickr_info['lastupdate'])))
+            photo.view_count = int(flickr_info['views'])
+            tags = flickr_info['tags'].split()
+            for tag in tags:
+                if tag == 'wallpaper':
                     photo.wallpaper = True
                     break
-
-            retries = 5
-            photo.source_url = None
-            while retries > 0:
-                try:
-                    sizes = flickr.photos.getSizes(photo_id=photo_id,
-                                                format='json')
-                    retries = 0
-                    sizes_dict = json.loads(sizes.decode("utf-8"))
-                    for entry in sizes_dict['sizes']['size']:
-                        if entry['label'] == 'Original':
-                            photo.source_url = entry['source']
-                            break
-                except flickrapi.exceptions.FlickrError:
-                    retries -= 1
-                    time.sleep(0.1)
-            
-            if photo.source_url:
-                photo.save()
+            photo.source_url = flickr_info['url_o']
+            photo.save()
         return return_value    
