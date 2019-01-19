@@ -90,7 +90,7 @@ class Photo(models.Model):
                         break
             if views_changed or return_value == 'edit':
                 photo.save()
-        except:
+        except Photo.DoesNotExist:
             return_value = 'create'
             photo = Photo()
             photo.pic_id = photo_id
