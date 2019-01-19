@@ -136,7 +136,7 @@ def update_db_from_flickr(self, rebuild):
         page_number += 1
         for entry in info['photos']['photo']:
             photo_id = entry['id']
-            status = Photo.create_or_update(flickr, photo_id, entry)
+            status = Photo.create_or_update(photo_id, entry)
             if status == 'edit':
                 edit_count += 1
             progress_recorder.set_progress(progress, total)

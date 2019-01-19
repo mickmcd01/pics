@@ -61,7 +61,7 @@ class Photo(models.Model):
         return total_views['view_count__sum']
 
     @staticmethod
-    def create_or_update(flickr, photo_id, flickr_info):
+    def create_or_update(photo_id, flickr_info):
         photo = None
         return_value = ''
         views_changed = False
@@ -77,7 +77,7 @@ class Photo(models.Model):
             if title != photo.title:
                 photo.title = title
                 return_value = 'edit'
-            old_date = time.strftime('%Y-%m-%d %H:%M:%S', photo.date_taken)
+            old_date = photo.date_taken.strftime('%Y-%m-%d %H:%M:%S')
             if old_date != flickr_info['datetaken']:
                 photo.date_taken = '%s+00' % flickr_info['datetaken']
                 return_value = 'edit'
