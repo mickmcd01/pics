@@ -47,6 +47,24 @@ class PhotoTestCase(TestCase):
             title='Test Photo 5', wallpaper=True)
         self.assertEqual(3, Photo.slideshow_count())
 
+    def test_wallpaper_tag(self):
+        Photo.objects.create(pic_id='0006', date_posted='2018-12-01 00:00:00+00',
+            date_taken='2016-07-11 00:00:00+00', date_updated='2018-12-01 00:00:00+00',
+            view_count='98', source_url='https://www.flickr.com/test_photo_1_o.jpg',
+            title='Test Photo 6', wallpaper=False)
+        photo = Photo.objects.get(pic_id='0006')
+        self.assertEqual(False, photo.wallpaper)
+        flickr_info = {'views':50, 'title':'Test Photo 6', 'datetaken':'2018-12-01 00:00:00',
+                       'tags':'abc def wallxpaper', 'url_o': 'https://www.flickr.com/test_photo_2_o.jpg',
+                       'dateupload':'1547931024', 'lastupdate':'1547931024'}
+        photo.wallpaper_tag(flickr_info)
+        self.assertEqual(False, photo.wallpaper)
+        flickr_info = {'views':50, 'title':'Test Photo 6', 'datetaken':'2018-12-01 00:00:00',
+                       'tags':'abc def wallpaper', 'url_o': 'https://www.flickr.com/test_photo_2_o.jpg',
+                       'dateupload':'1547931024', 'lastupdate':'1547931024'}
+        photo.wallpaper_tag(flickr_info)
+        self.assertEqual(True, photo.wallpaper)
+
     def test_create_or_update(self):
         pic_id = '0002'
         flickr_info = {'views':50, 'title':'Test Photo 2', 'datetaken':'2018-12-01 00:00:00',

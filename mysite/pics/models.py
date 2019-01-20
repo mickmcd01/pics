@@ -55,6 +55,14 @@ class Photo(models.Model):
     def display_date(self):
         return self.date_taken.strftime('%B %d, %Y')
 
+    def wallpaper_tag(self, flickr_info):
+        tags = flickr_info['tags'].split()
+        for tag in tags:
+            if tag == 'wallpaper':
+                self.wallpaper = True
+                break
+        return self.wallpaper
+
     @staticmethod
     def total_views():
         total_views = Photo.objects.aggregate(Sum('view_count'))
@@ -82,12 +90,8 @@ class Photo(models.Model):
                 photo.date_taken = '%s+00' % flickr_info['datetaken']
                 return_value = 'edit'
             if photo.wallpaper is False:
-                tags = flickr_info['tags'].split()
-                for tag in tags:
-                    if tag == 'wallpaper':
-                        photo.wallpaper = True
-                        return_value = 'edit'
-                        break
+                if photo.wallpaper_tag(flickr_info) is True:
+                    return_value = 'edit'
             if views_changed or return_value == 'edit':
                 photo.save()
         except Photo.DoesNotExist:
@@ -105,11 +109,7 @@ class Photo(models.Model):
             photo.date_updated = time.strftime('%Y-%m-%d %H:%M:%S+00', time.localtime(
                                     int(flickr_info['lastupdate'])))
             photo.view_count = int(flickr_info['views'])
-            tags = flickr_info['tags'].split()
-            for tag in tags:
-                if tag == 'wallpaper':
-                    photo.wallpaper = True
-                    break
+            photo.wallpaper_tag(flickr_info)
             photo.source_url = flickr_info['url_o']
             photo.save()
         return return_value
