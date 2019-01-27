@@ -19,6 +19,11 @@ class PhotoAdmin(admin.ModelAdmin):
         
     def save_model(self, request, obj, form, change):
         flickr_update_photo(obj)
+        obj.download_from_flickr()
+        path = obj.image_path()
+        status = final_processing(path, obj.title, obj.display_date())
+        if status is False:
+            print('Failed!')
         super().save_model(request, obj, form, change)
     
     def update_photos(self, request, queryset):
