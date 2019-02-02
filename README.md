@@ -17,4 +17,6 @@ Functions:
 <li>Process Slides: Adds title and date text to the downloaded pictures</li>
 <li>Rebuild Picture Database: deletes the database table and rebuilds it from scratch</li>
 <li>Individual pictures can be updated from the admin UI - this goes through the update, download, and process sequence for each picture selected. Typically used after editing the title or date on flickr.</li>
-<li>Local version or flickr version of pictures in the database can be viewed from the admin UI</ul>
+<li>Local version or flickr version of pictures in the database can be viewed from the admin UI</li>
+<li>Pictures can be excluded from wallpaper directory by creating a record in "Exclude from wallpaper" in the django admin (using the pic_id). The admin includes an action to delete excluded photos that might already be in the wallpaper directory</li>
+</ul>
