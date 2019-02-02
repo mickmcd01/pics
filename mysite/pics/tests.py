@@ -1,8 +1,8 @@
 import datetime
 import pytz
 from django.test import TestCase
-from pics.models import Photo, Statistics
-from pics.settings import DOWNLOAD_PATH
+from pics.models import Photo, Statistics, NoWallpaper
+from pics.settings import DOWNLOAD_PATH, VIEW_THRESHOLD
 
 class PhotoTestCase(TestCase):
     def setUp(self):
@@ -91,3 +91,19 @@ class PhotoTestCase(TestCase):
         self.assertEqual(photo.view_count, 55)
         self.assertEqual(photo.title, 'Modified Test Photo 2')
         self.assertEqual(photo.date_taken, datetime.datetime(2018, 12, 2, 0, 0, tzinfo=pytz.timezone("UTC")))
+
+    def test_in_slideshow(self):
+        NoWallpaper.objects.create(pic_id=9575005330)
+        pic1_yes = Photo(pic_id=100, view_count=VIEW_THRESHOLD, wallpaper=False)
+        pic2_yes = Photo(pic_id=102, view_count=VIEW_THRESHOLD-1, wallpaper=True)
+        pic3_no = Photo(pic_id=9575005330, view_count=VIEW_THRESHOLD, wallpaper=False)
+        pic4_no = Photo(pic_id=9575005330, view_count=VIEW_THRESHOLD-1, wallpaper=True)
+        pic5_no = Photo(pic_id=103, view_count=VIEW_THRESHOLD-1, wallpaper=False)
+        pic6_yes = Photo(pic_id=104, view_count=VIEW_THRESHOLD, wallpaper=True)
+
+        self.assertTrue(pic1_yes.in_slideshow())
+        self.assertTrue(pic2_yes.in_slideshow())
+        self.assertFalse(pic3_no.in_slideshow())
+        self.assertFalse(pic4_no.in_slideshow())
+        self.assertFalse(pic5_no.in_slideshow())
+        self.assertTrue(pic6_yes.in_slideshow())

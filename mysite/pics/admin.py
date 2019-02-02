@@ -1,12 +1,32 @@
 import os
 from subprocess import Popen
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.shortcuts import render
 from django.urls import path, reverse
 from django.utils.html import format_html
-from pics.models import Photo, Statistics
+from pics.models import Photo, Statistics, NoWallpaper
 from pics.tasks import final_processing, update_one_record
 from pics.flickr_utils import flickr_update_photo
+
+class NoWallpaperAdmin(admin.ModelAdmin):
+    list_display = ('pic_id',)
+    actions = ['delete_nowallpaper']
+
+    def delete_nowallpaper(self, request, queryset):
+        attempted = len(queryset)
+        successful = 0
+        for obj in queryset:
+            photo = Photo.objects.get(pic_id=obj.pic_id)
+            if photo:
+                if os.path.isfile(photo.image_path()): 
+                    os.remove(photo.image_path())
+                    successful += 1
+
+        messages.info(request, 'Attempted to delete %d, actually deleted %d' % (attempted, successful)) 
+
+    delete_nowallpaper.short_description = 'Delete "no wallpaper" photos'
+
+admin.site.register(NoWallpaper, NoWallpaperAdmin)
 
 class PhotoAdmin(admin.ModelAdmin):
     list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_photo_url')
@@ -45,7 +65,9 @@ class PhotoAdmin(admin.ModelAdmin):
     def view_local_photo(self, request, queryset):
         for obj in queryset:
             if os.path.isfile(obj.image_path()): 
-                Popen(['xviewer', obj.image_path()]) 
+                Popen(['xviewer', obj.image_path()])
+            else:
+                messages.error(request, 'There is no local file for %s' % obj.title) 
 
     view_local_photo.short_description = "View local photo"
 

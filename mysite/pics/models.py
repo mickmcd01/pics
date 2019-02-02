@@ -27,6 +27,12 @@ class Statistics(models.Model):
         stats.edits = edits
         stats.save()
 
+class NoWallpaper(models.Model):
+    pic_id = models.CharField(max_length=50, primary_key=True)
+
+    class Meta:
+        verbose_name_plural = 'Exclude from wallpaper'
+
 class Photo(models.Model):
     pic_id = models.CharField(max_length=50, primary_key=True)
     date_posted = models.DateTimeField('date posted')
@@ -115,6 +121,8 @@ class Photo(models.Model):
         return return_value
 
     def in_slideshow(self):
+        if NoWallpaper.objects.filter(pic_id=self.pic_id).count() != 0:
+            return False
         if self.view_count >= VIEW_THRESHOLD or self.wallpaper:
             return True
         else:
