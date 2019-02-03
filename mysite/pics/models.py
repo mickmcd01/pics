@@ -28,6 +28,13 @@ class Statistics(models.Model):
         stats.save()
 
 class NoWallpaper(models.Model):
+    # a list of picture IDs that will not be copied into the 
+    # slideshow directory. Pictures already in the directory can
+    # be deleted using the django admin.
+
+    # the pic_id is NOT a foreign key to the Photo model because
+    # the values in this table should be permanent, even if the Photo
+    # table is wiped out and rebuilt from scratch.
     pic_id = models.CharField(max_length=50, primary_key=True)
 
     class Meta:
