@@ -36,7 +36,7 @@ class NoWallpaperAdmin(admin.ModelAdmin):
 admin.site.register(NoWallpaper, NoWallpaperAdmin)
 
 class PhotoAdmin(admin.ModelAdmin):
-    list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_photo_url')
+    list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_flickr_page', 'show_photo_url')
     search_fields = ('title',)
     actions = ['update_photos', 'view_local_photo']
     readonly_fields = ['pic_id', 'date_posted', 'date_updated', 'view_count', 'source_url', 'wallpaper']
@@ -65,9 +65,14 @@ class PhotoAdmin(admin.ModelAdmin):
     update_photos.short_description = "Update selected photos"
 
     def show_photo_url(self, obj):
-        return format_html("<a href='{url}' target='_blank'>{url}</a>", url=obj.source_url)
+        return format_html("<a href='{url}' target='_blank'>Flickr Photo Only</a>", url=obj.source_url)
 
-    show_photo_url.short_description = "Photo on Flickr"
+    show_photo_url.short_description = "Flickr Photo Only"
+
+    def show_flickr_page(self, obj):
+        return format_html("<a href='{url}' target='_blank'>Flickr Page</a>", url=obj.flickr_page())
+
+    show_flickr_page.short_description = "Flickr Page"
 
     def view_local_photo(self, request, queryset):
         for obj in queryset:

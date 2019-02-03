@@ -107,3 +107,12 @@ class PhotoTestCase(TestCase):
         self.assertFalse(pic4_no.in_slideshow())
         self.assertFalse(pic5_no.in_slideshow())
         self.assertTrue(pic6_yes.in_slideshow())
+
+    def test_flickr_page(self):
+        pic1 = Photo(pic_id=100, view_count=VIEW_THRESHOLD, wallpaper=False)
+        pic2 = Photo(pic_id=101, view_count=VIEW_THRESHOLD-1, wallpaper=True)
+        pic3 = Photo(pic_id=9575005330, view_count=VIEW_THRESHOLD, wallpaper=False)
+
+        self.assertEqual(pic1.flickr_page(), 'https://www.flickr.com/photos/mickmcd/100')
+        self.assertEqual(pic2.flickr_page(), 'https://www.flickr.com/photos/mickmcd/101')
+        self.assertEqual(pic3.flickr_page(), 'https://www.flickr.com/photos/mickmcd/9575005330')

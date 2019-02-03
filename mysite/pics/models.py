@@ -8,7 +8,7 @@ import requests
 import datetime
 from django.db import models
 from django.db.models import Sum
-from pics.settings import DOWNLOAD_PATH, VIEW_THRESHOLD
+from pics.settings import DOWNLOAD_PATH, VIEW_THRESHOLD, FLICKR_USER_ID
 
 class Statistics(models.Model):
     date = models.DateTimeField(auto_now_add=True)
@@ -67,6 +67,9 @@ class Photo(models.Model):
 
     def display_date(self):
         return self.date_taken.strftime('%B %d, %Y')
+
+    def flickr_page(self):
+        return 'https://www.flickr.com/photos/%s/%s' % (FLICKR_USER_ID, self.pic_id)
 
     def wallpaper_tag(self, flickr_info):
         tags = flickr_info['tags'].split()
