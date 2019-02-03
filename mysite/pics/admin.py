@@ -9,7 +9,7 @@ from pics.tasks import final_processing, update_one_record
 from pics.flickr_utils import flickr_update_photo
 
 class NoWallpaperAdmin(admin.ModelAdmin):
-    list_display = ('pic_id',)
+    list_display = ('pic_id', 'pic_info')
     actions = ['delete_nowallpaper']
 
     def delete_nowallpaper(self, request, queryset):
@@ -25,6 +25,13 @@ class NoWallpaperAdmin(admin.ModelAdmin):
         messages.info(request, 'Attempted to delete %d, actually deleted %d' % (attempted, successful)) 
 
     delete_nowallpaper.short_description = 'Delete "no wallpaper" photos'
+
+    def pic_info(self, instance):
+        photo = Photo.objects.get(pic_id=instance.pic_id)
+        if photo:
+            return '%s, %s' % (photo.title, photo.display_date())
+
+    pic_info.short_description = 'Picture title and date taken'
 
 admin.site.register(NoWallpaper, NoWallpaperAdmin)
 
