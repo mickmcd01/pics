@@ -36,7 +36,7 @@ class NoWallpaperAdmin(admin.ModelAdmin):
 admin.site.register(NoWallpaper, NoWallpaperAdmin)
 
 class PhotoAdmin(admin.ModelAdmin):
-    list_display = ('title', 'view_count', 'date_taken', 'wallpaper', 'show_flickr_page', 'show_photo_url')
+    list_display = ('title', 'view_count', 'date_taken', 'slideshow', 'show_flickr_page', 'show_photo_url')
     search_fields = ('title',)
     actions = ['update_photos', 'view_local_photo']
     readonly_fields = ['pic_id', 'date_posted', 'date_updated', 'view_count', 'source_url', 'wallpaper']
@@ -63,6 +63,16 @@ class PhotoAdmin(admin.ModelAdmin):
                 print('Failed!')
 
     update_photos.short_description = "Update selected photos"
+
+    def slideshow(self, obj):
+        if NoWallpaper.objects.filter(pic_id=obj.pic_id).count() != 0:
+            return 'Never'
+        elif obj.wallpaper is True:
+            return 'Always'
+        else:
+            return '-'
+
+    slideshow.short_description = "Tagged"
 
     def show_photo_url(self, obj):
         return format_html("<a href='{url}' target='_blank'>Flickr Photo Only</a>", url=obj.source_url)
