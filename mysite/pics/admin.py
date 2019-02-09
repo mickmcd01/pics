@@ -40,6 +40,7 @@ class PhotoAdmin(admin.ModelAdmin):
     search_fields = ('title',)
     actions = ['update_photos', 'view_local_photo']
     readonly_fields = ['pic_id', 'date_posted', 'date_updated', 'view_count', 'source_url', 'wallpaper']
+    ordering = ('-date_taken', )
 
     def has_add_permission(self, request, obj=None):
         return False
