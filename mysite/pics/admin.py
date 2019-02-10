@@ -98,6 +98,7 @@ admin.site.register(Photo, PhotoAdmin)
 
 class StatisticsAdmin(admin.ModelAdmin):
     list_display = ('id', 'date', 'public_pics', 'view_count', 'edits')
+    readonly_fields = ['id', 'date', 'public_pics', 'view_count', 'edits']
 
     def has_add_permission(self, request, obj=None):
         return False
