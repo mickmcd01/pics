@@ -53,8 +53,8 @@ class ViewCountListFilter(admin.SimpleListFilter):
         in the right sidebar.
         """
         return (
-            ('less-than-threshold', ('less_than')),
-            ('greater-than-threshold', ('greater_than')),
+            ('less-than-threshold', ('Less than view threshold')),
+            ('greater-than-threshold', ('Greater than view threshold')),
         )
 
     def queryset(self, request, queryset):
@@ -63,7 +63,7 @@ class ViewCountListFilter(admin.SimpleListFilter):
         provided in the query string and retrievable via
         `self.value()`.
         """
-        # Compare the requested value (either '80s' or '90s')
+        # Compare the requested value
         # to decide how to filter the queryset.
         if self.value() == 'less-than-threshold':
             return queryset.filter(view_count__lt=VIEW_THRESHOLD)
