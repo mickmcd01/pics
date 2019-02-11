@@ -7,6 +7,7 @@ from django.utils.html import format_html
 from pics.models import Photo, Statistics, NoWallpaper
 from pics.tasks import final_processing, update_one_record
 from pics.flickr_utils import flickr_update_photo
+from pics.settings import VIEW_THRESHOLD
 
 class NoWallpaperAdmin(admin.ModelAdmin):
     list_display = ('pic_id', 'pic_info')
@@ -35,12 +36,47 @@ class NoWallpaperAdmin(admin.ModelAdmin):
 
 admin.site.register(NoWallpaper, NoWallpaperAdmin)
 
+class ViewCountListFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = ('view count')
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'view_count'
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        return (
+            ('less-than-threshold', ('less_than')),
+            ('greater-than-threshold', ('greater_than')),
+        )
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        # Compare the requested value (either '80s' or '90s')
+        # to decide how to filter the queryset.
+        if self.value() == 'less-than-threshold':
+            return queryset.filter(view_count__lt=VIEW_THRESHOLD)
+        if self.value() == 'greater-than-threshold':
+            return queryset.filter(view_count__gte=VIEW_THRESHOLD)
+
 class PhotoAdmin(admin.ModelAdmin):
     list_display = ('title', 'view_count', 'date_taken', 'slideshow', 'show_flickr_page', 'show_photo_url')
     search_fields = ('title',)
     actions = ['update_photos', 'view_local_photo']
     readonly_fields = ['pic_id', 'date_posted', 'date_updated', 'view_count', 'source_url', 'wallpaper']
     ordering = ('-date_taken', )
+    list_filter = (ViewCountListFilter,)
 
     def has_add_permission(self, request, obj=None):
         return False
