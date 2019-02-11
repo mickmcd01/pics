@@ -46,8 +46,17 @@ def search_pictures(request):
             # process the data in form.cleaned_data as required
             # ...
             # redirect to a new URL:
+            picture_list = Photo.objects.all().order_by('date_taken')
             search_string = form.cleaned_data['search_text']
-            picture_list = Photo.objects.filter(title__icontains=search_string).order_by('date_taken')
+            if search_string and search_string != '':
+                picture_list = picture_list.filter(title__icontains=search_string)
+            start_date = form.cleaned_data['start_date']
+            if start_date:
+                picture_list = picture_list.filter(date_taken__gte=start_date)
+            end_date = form.cleaned_data['end_date']
+            if end_date:
+                picture_list = picture_list.filter(date_taken__lte=end_date)
+            
             return render(request, 'pics/picture_list.html', {'picture_list': picture_list})
 
     # if a GET (or any other method) we'll create a blank form
