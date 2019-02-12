@@ -36,6 +36,14 @@ def get_flickr_photo(flickr, photo_id):
     info_dict = json.loads(info.decode("utf-8"))
     return info_dict
 
+def get_flickr_small(flickr, photo_id):
+    info = flickr.photos.getSizes(photo_id=photo_id, format='json')
+    info_dict = json.loads(info.decode("utf-8"))
+    for entry in info_dict['sizes']['size']:
+        if entry['label'] == 'Small':
+            return entry['source']
+    return None
+
 def get_public_count(flickr):
     info = flickr.people.findByUsername(username=FLICKR_USER_NAME, format='json')
     info = json.loads(info.decode('utf-8'))

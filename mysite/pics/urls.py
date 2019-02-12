@@ -9,6 +9,7 @@ urlpatterns = [
     path('pics/download_pics', views.download_pics, name='download_pics'),
     path('pics/process_slides', views.process_slides, name='process_slides'),
     path('pics/search_pictures', views.search_pictures, name='search_pictures'),
+    path('pics/picture_info/<int:pic_id>', views.picture_info, name='picture_info'),
     path('pics/', views.index, name='index'),
     path('celery-progress/', include('celery_progress.urls')),
 ]

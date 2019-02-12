@@ -4,35 +4,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <title>Picture List</title>
+    <title>Picture Info</title>
 </head>
 <body>
-    <h1>Picture List</h1>
+    <h1>Picture Info</h1>
     <a href="{% url 'index' %}">Home</a>
     <br>
     <a href="{% url 'search_pictures' %}">Another Search</a>
-
-    <table class="table">
-        <thead>
-                <tr>
-                    <th scope="col">Info</th>
-                    <th scope="col">Title</th>
-                    <th scope="col">Date Taken</th>
-                    <th scope="col">View Count</th>
-                </tr>
-        </thead>
-        <tbody>
-            {% for pic in picture_list %}
-            <tr>
-                <td><a href="{% url 'picture_info' pic.pic_id %}">Info</a></td>
-                <td>{{ pic.title }}</td>
-                <td>{{ pic.date_taken }}</td>
-                <td>{{ pic.view_count }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
+    <br>
+    <img src="{{ url }}" />
+    <li>
+        <ul>Title: {{ title }}</ul>
+        <ul>Description: {{ desc }}</ul>  
+        <ul>Date Taken: {{ date_taken }}</ul>
+        <ul>Local: {{ local }}</ul>
+        <ul>Tags: {{ tags|join:", " }}</ul>
+    </li>
     {% load static %}
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>

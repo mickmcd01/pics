@@ -2,7 +2,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.db.models import Sum
 from .models import Photo
-from .flickr_utils import flickr_keys
+from .flickr_utils import (flickr_keys, flickr_connect, get_flickr_photo,
+                           get_flickr_small)
 import flickrapi
 import flickrapi.shorturl
 import flickrapi.exceptions
@@ -63,4 +64,24 @@ def search_pictures(request):
     else:
         form = SearchPicturesForm()
 
-    return render(request, 'pics/search_pictures.html', {'form': form, 'picture_list': []})    
+    return render(request, 'pics/search_pictures.html', {'form': form, 'picture_list': []})
+
+def picture_info(request, pic_id):
+    context = {}
+    photo = Photo.objects.get(pic_id=pic_id)
+        
+    flickr = flickr_connect()
+    info_dict = get_flickr_photo(flickr, photo.pic_id)
+    if os.path.isfile(photo.image_path()):
+        context['local'] = True
+    else:
+        context['local'] = False
+    context['tags'] = []
+    for entry in info_dict['photo']['tags']['tag']:
+        context['tags'].append(entry['raw'])
+    context['desc'] = info_dict['photo']['description']['_content']
+    context['title'] = info_dict['photo']['title']['_content']
+    context['date_taken'] = photo.display_date()
+    context['url'] = get_flickr_small(flickr, photo.pic_id)
+    
+    return render(request, 'pics/picture_info.html', context=context)
