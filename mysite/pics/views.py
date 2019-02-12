@@ -13,12 +13,17 @@ import os
 import time
 from .tasks import update_pics_db, rebuild_pics_db, download_pics_task, process_slides_task
 from .forms import SearchPicturesForm
+from pics.settings import DOWNLOAD_PATH
 
 def index(request):
     total_views = Photo.total_views()
     public_pictures = Photo.objects.count()
-    slideshow = Photo.slideshow_count()
-    context = {'total_views': total_views, 'public_pictures': public_pictures, 'slideshow': slideshow}
+    eligible = Photo.slideshow_count()
+    actual = len([name for name in os.listdir(DOWNLOAD_PATH) if os.path.isfile(os.path.join(DOWNLOAD_PATH, name))])
+    context = {'total_views': total_views, 
+               'public_pictures': public_pictures, 
+               'eligible': eligible,
+               'actual': actual}
     return render(request, 'pics/index.html', context=context)
 
 def update_db(request):
