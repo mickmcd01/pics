@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.db.models import Sum
-from .models import Photo
+from .models import Photo, NoWallpaper
 from .flickr_utils import (flickr_keys, flickr_connect, get_flickr_photo,
                            get_flickr_small)
 import flickrapi
@@ -80,8 +80,19 @@ def picture_info(request, pic_id):
     for entry in info_dict['photo']['tags']['tag']:
         context['tags'].append(entry['raw'])
     context['desc'] = info_dict['photo']['description']['_content']
+    if context['desc'] is None or context['desc'] == '':
+        context['desc'] = 'None'
     context['title'] = info_dict['photo']['title']['_content']
     context['date_taken'] = photo.display_date()
     context['url'] = get_flickr_small(flickr, photo.pic_id)
-    
+    context['view_count'] = photo.view_count
+    if NoWallpaper.objects.filter(pic_id=pic_id).count() != 0:
+        context['excluded'] = True
+        context['included'] = False
+    else:
+        context['excluded'] = False
+        if photo.wallpaper is True:
+            context['included'] = True
+        else:
+            context['included'] = False
     return render(request, 'pics/picture_info.html', context=context)
