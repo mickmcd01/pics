@@ -1,0 +1,17 @@
+{% extends "pics/base_generic.html" %}
+{% block content %}
+    <strong>Download and Process Missing Slides</strong>
+
+    <div class='progress-wrapper'>
+        <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
+    </div>
+    <div id="progress-bar-message">Determining number of photos to process...</div>    
+
+    {% load static %}
+    <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
+    <script>
+    var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+    document.addEventListener("DOMContentLoaded", function () {
+      CeleryProgressBar.initProgressBar(progressUrl);
+    })</script>
+{% endblock %}

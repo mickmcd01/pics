@@ -11,7 +11,8 @@ import requests
 import json
 import os
 import time
-from .tasks import update_pics_db, rebuild_pics_db, download_pics_task, process_slides_task
+from .tasks import (update_pics_db, rebuild_pics_db, download_pics_task, 
+                    process_slides_task, download_and_process_missing_slides_task)
 from .forms import SearchPicturesForm
 from pics.settings import DOWNLOAD_PATH
 
@@ -41,6 +42,10 @@ def download_pics(request):
 def process_slides(request):
     result = process_slides_task.delay()
     return render(request, 'pics/process_slides.html', context={'task_id': result.task_id})
+
+def download_and_process(request):
+    result = download_and_process_missing_slides_task.delay()
+    return render(request, 'pics/download_and_process.html', context={'task_id': result.task_id})
 
 def search_pictures(request):
     # if this is a POST request we need to process the form data

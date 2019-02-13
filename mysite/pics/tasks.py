@@ -212,3 +212,39 @@ def process_slides_task(self):
         progress_recorder.set_progress(progress, total)
 
     progress_recorder.set_progress(total, total)
+
+@shared_task(bind=True)
+def download_and_process_missing_slides_task(self):
+    """Determine which files are in the database but not yet
+    downloaded. Download and process the missing files.
+    """
+    progress_recorder = ProgressRecorder(self)
+    total = 0
+    progress = 0
+
+    file_list = os.listdir(DOWNLOAD_PATH)
+
+    photos = Photo.objects.all()
+    missing = []
+    for photo in photos:
+        if photo.in_slideshow():
+            _, tail = os.path.split(photo.source_url)
+            if tail not in file_list:
+                total += 1
+                missing.append(photo.pic_id)
+
+    for id in missing:
+        photo = Photo.objects.get(pic_id=id)
+        photo.download_from_flickr()
+        path = photo.image_path()
+        status = final_processing(path, photo.title, photo.display_date())
+        if status is False:
+            print('Failed!')
+        progress += 1
+        progress_recorder.set_progress(progress, total)
+
+    progress_recorder.set_progress(total, total)
+
+
+
+    
