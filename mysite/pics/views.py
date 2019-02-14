@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.db.models import Sum
-from .models import Photo, NoWallpaper
+from .models import Photo, NoWallpaper, Statistics
 from .flickr_utils import (flickr_keys, flickr_connect, get_flickr_photo,
                            get_flickr_small)
 import flickrapi
@@ -21,10 +21,12 @@ def index(request):
     public_pictures = Photo.objects.count()
     eligible = Photo.slideshow_count()
     actual = len([name for name in os.listdir(DOWNLOAD_PATH) if os.path.isfile(os.path.join(DOWNLOAD_PATH, name))])
+    stats = Statistics.objects.latest('date')
     context = {'total_views': total_views, 
                'public_pictures': public_pictures, 
                'eligible': eligible,
-               'actual': actual}
+               'actual': actual,
+               'last_update': stats.date}
     return render(request, 'pics/index.html', context=context)
 
 def update_db(request):
