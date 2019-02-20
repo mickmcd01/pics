@@ -21,12 +21,16 @@ def index(request):
     public_pictures = Photo.objects.count()
     eligible = Photo.slideshow_count()
     actual = len([name for name in os.listdir(DOWNLOAD_PATH) if os.path.isfile(os.path.join(DOWNLOAD_PATH, name))])
-    stats = Statistics.objects.latest('date')
+    try:
+        stats = Statistics.objects.latest('date')
+        last_update = stats.date
+    except:
+        last_update = ': None'
     context = {'total_views': total_views, 
                'public_pictures': public_pictures, 
                'eligible': eligible,
                'actual': actual,
-               'last_update': stats.date}
+               'last_update': last_update}
     return render(request, 'pics/index.html', context=context)
 
 def update_db(request):
