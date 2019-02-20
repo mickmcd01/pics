@@ -1,0 +1,17 @@
+amqp==2.4.1
+billiard==3.5.0.5
+celery==4.2.1
+configobj==5.0.6
+Django==1.11.20
+kombu==4.3.0
+pycairo==1.16.2
+pycrypto==2.6.1
+pygobject==3.26.1
+pyparted==3.11.1
+python-apt==1.6.3
+python-xlib==0.20
+pytz==2018.9
+pyxdg==0.25
+setproctitle==1.1.10
+six==1.11.0
+vine==1.2.0
