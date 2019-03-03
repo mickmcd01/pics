@@ -112,3 +112,20 @@ def picture_info(request, pic_id):
         else:
             context['included'] = False
     return render(request, 'pics/picture_info.html', context=context)
+
+def preview_missing(request):
+    context = {}
+    file_list = os.listdir(DOWNLOAD_PATH)
+
+    flickr = flickr_connect()
+    photos = Photo.objects.all()
+    missing = []
+    for photo in photos:
+        if photo.in_slideshow():
+            _, tail = os.path.split(photo.source_url)
+            if tail not in file_list:
+                url = get_flickr_small(flickr, photo.pic_id)
+                missing.append([photo, url])
+    context['missing'] = missing
+    
+    return render(request, 'pics/preview_missing.html', context=context)

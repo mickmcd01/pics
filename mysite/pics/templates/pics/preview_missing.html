@@ -1,0 +1,12 @@
+{% extends "pics/base_generic.html" %}
+{% block content %}
+    <strong>Missing Pictures</strong>
+    <p></p>
+    {% for pic in missing %}
+        <img src="{{ pic.1 }}" />
+        <ul style="list-style-type:circle">
+            <li>Title: {{ pic.0.title }}</li>
+            <li>Views: {{ pic.0.view_count }}</li>  
+        </ul>
+    {% endfor %}    
+{% endblock %}
