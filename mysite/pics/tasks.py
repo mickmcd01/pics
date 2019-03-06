@@ -10,7 +10,7 @@ from pics.models import Photo, Statistics
 from pics.settings import (VIEW_THRESHOLD, DOWNLOAD_PATH, FONT_PATH,
                            TEST_LIMIT, FLICKR_USER_ID)
 from pics.flickr_utils import (flickr_connect, get_flickr_photo, 
-                               get_public_count)
+                               get_public_count, flickr_search)
 from celery import Celery
 from celery_progress.backend import ProgressRecorder
 from PIL import Image, ImageFont, ImageDraw, ExifTags, ImageFile
@@ -115,24 +115,14 @@ def update_db_from_flickr(self, rebuild):
 
     edit_count = 0
     page_number = 1
-    info = flickr.photos.search(user_id=FLICKR_USER_ID,
-                             privacy_filter=1,
-                             format='json',
-                             per_page=100,
-                             page=1)
-    info = json.loads(info.decode('utf-8'))
+    info = flickr_search(flickr, 1, None)
     total = int(info['photos']['total'])
     loop_count = info['photos']['pages']
 
     page_number = 1
     while page_number <= loop_count:
-        info = flickr.photos.search(user_id=FLICKR_USER_ID,
-                                privacy_filter=1,
-                                format='json',
-                                extras='views,date_taken,url_o,date_upload,last_update,tags',
-                                per_page=100,
-                                page=page_number)
-        info = json.loads(info.decode('utf-8'))
+        info = flickr_search(flickr, page_number, 
+            'views,date_taken,url_o,date_upload,last_update,tags')
         page_number += 1
         for entry in info['photos']['photo']:
             photo_id = entry['id']

@@ -3,7 +3,7 @@ import configparser
 import json
 import flickrapi
 import time
-from pics.settings import CONFIG_PATH, FLICKR_USER_NAME
+from pics.settings import CONFIG_PATH, FLICKR_USER_NAME, FLICKR_USER_ID
 
 def flickr_keys(filename=CONFIG_PATH):
     """Read the flickr key information."""
@@ -75,3 +75,20 @@ def flickr_update_photo(obj):
     flickr.authenticate_via_browser(perms='write')
     flickr.photos.setMeta(photo_id=obj.pic_id, title=obj.title)
     flickr.photos.setDates(photo_id=obj.pic_id, date_taken=obj.date_taken.strftime('%Y-%m-%d %H:%M:%S'))
+
+def flickr_search(flickr, page_number, extras):
+    retry = 5
+    while retry > 0:
+        try:
+            info = flickr.photos.search(user_id=FLICKR_USER_ID,
+                                        privacy_filter=1,
+                                        format='json',
+                                        extras=extras,
+                                        per_page=100,
+                                        page=page_number)
+            info = json.loads(info.decode('utf-8'))
+            return info
+        except:
+            retry -= 1
+            time.sleep(0.1)
+    return None
