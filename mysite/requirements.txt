@@ -6,7 +6,7 @@ astroid==2.1.0
 beautifulsoup4==4.6.0
 billiard==3.5.0.5
 Brlapi==0.6.6
-celery==4.2.1
+celery==5.2.2
 celery-progress==0.0.3
 certifi==2018.11.29
 chardet==3.0.4
